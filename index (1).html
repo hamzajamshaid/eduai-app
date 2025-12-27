@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduAI - Visual Learning Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141b3d;
+            --bg-card: #1a2347;
+            --accent-primary: #00d9ff;
+            --accent-secondary: #7b2ff7;
+            --accent-tertiary: #ff006e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0b3d9;
+            --success: #00ff88;
+            --shadow-glow: 0 0 30px rgba(0, 217, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--accent-primary), transparent);
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-secondary), transparent);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--accent-tertiary), transparent);
+            top: 50%;
+            left: 50%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -50px) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(40px, 40px) scale(1.05); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            border-radius: 30px;
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 100px;
+        }
+
+        .messages {
+            background: var(--bg-secondary);
+            border-radius: 25px;
+            padding: 30px;
+            min-height: 500px;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 217, 255, 0.1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 10px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 25px;
+            animation: slideIn 0.4s ease-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 20px;
+            max-width: 80%;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+        }
+
+        .message.assistant .message-content {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            text-align: left;
+        }
+
+        .visual-content {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .visual-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .visual-item:hover {
+            transform: scale(1.05) rotate(1deg);
+            box-shadow: 0 8px 25px rgba(123, 47, 247, 0.4);
+        }
+
+        .visual-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .visual-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            padding: 10px;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .input-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 30px;
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.3);
+        }
+
+        #messageInput {
+            flex: 1;
+            background: var(--bg-card);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 20px;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        #messageInput::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            padding: 15px 30px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 217, 255, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .toggle-btn {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-secondary));
+            color: white;
+            border-color: var(--accent-tertiary);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 217, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 5px;
+            padding: 15px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .diagram-container {
+            margin-top: 15px;
+            padding: 20px;
+            background: var(--bg-primary);
+            border-radius: 15px;
+            border: 2px dashed var(--accent-primary);
+        }
+
+        .code-block {
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border-left: 4px solid var(--accent-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .message-content { max-width: 95%; }
+            .input-container { flex-direction: column; }
+            button { width: 100%; }
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(0, 217, 255, 0.2);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+            border: 1px solid var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>✨ EduAI</h1>
+            <p class="tagline">Your Visual Learning Assistant - Making Education Engaging Through AI & Imagery</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message assistant" style="animation-delay: 0.1s;">
+                    <div class="message-content">
+                        <strong>👋 Hello! I'm EduAI, your visual learning companion!</strong>
+                        <p style="margin-top: 10px;">I can help you learn any topic with:</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>🖼️ Relevant images and diagrams</li>
+                            <li>📊 Visual explanations</li>
+                            <li>💡 Step-by-step breakdowns</li>
+                            <li>🎨 Interactive examples</li>
+                        </ul>
+                        <p style="margin-top: 10px;">Try asking: "Explain photosynthesis" or "Show me how the solar system works"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Ask me anything... I'll explain it with visuals! 🎓"
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                />
+                <div class="control-buttons">
+                    <button class="toggle-btn" id="visualToggle" onclick="toggleVisuals()">
+                        🖼️ Visuals: ON
+                    </button>
+                    <button class="toggle-btn" onclick="manageApiKey()">
+                        🔑 API Key
+                    </button>
+                    <button onclick="sendMessage()">
+                        Send ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let visualsEnabled = true;
+        let messageCount = 0;
+
+        function manageApiKey() {
+            const currentKey = localStorage.getItem('anthropic_api_key');
+            const message = currentKey 
+                ? 'API Key is set! ✅\n\nOptions:\n- Click OK to keep current key\n- Enter new key to replace\n- Click Cancel then enter "delete" to remove key'
+                : 'No API Key set.\n\nGet your FREE API key at:\nhttps://console.anthropic.com/\n\n($5 free credit = ~2,500 conversations)\n\nEnter your key below:';
+            
+            const newKey = prompt(message, currentKey ? '(hidden for security)' : '');
+            
+            if (newKey && newKey !== '(hidden for security)') {
+                if (newKey.toLowerCase() === 'delete') {
+                    localStorage.removeItem('anthropic_api_key');
+                    alert('API key removed! ❌');
+                } else {
+                    localStorage.setItem('anthropic_api_key', newKey);
+                    alert('API key saved! ✅');
+                }
+            }
+        }
+
+        function toggleVisuals() {
+            visualsEnabled = !visualsEnabled;
+            const btn = document.getElementById('visualToggle');
+            if (visualsEnabled) {
+                btn.classList.add('active');
+                btn.innerHTML = '🖼️ Visuals: ON';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '🖼️ Visuals: OFF';
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            const typingId = addTypingIndicator();
+            
+            // Simulate AI response with delay
+            setTimeout(async () => {
+                removeTypingIndicator(typingId);
+                await generateResponse(message);
+            }, 1500);
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.style.animationDelay = `${messageCount * 0.1}s`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = text;
+            
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            messageCount++;
+            
+            return messageDiv;
+        }
+
+        function addTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typing-indicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            typingDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            return 'typing-indicator';
+        }
+
+        function removeTypingIndicator(id) {
+            const indicator = document.getElementById(id);
+            if (indicator) indicator.remove();
+        }
+
+        async function generateResponse(userMessage) {
+            try {
+                const apiKey = localStorage.getItem('anthropic_api_key');
+                
+                if (!apiKey) {
+                    const key = prompt('Please enter your Anthropic API Key:\n\nGet one free at: https://console.anthropic.com/\n\n($5 free credit when you sign up!)');
+                    if (!key) {
+                        addMessage('❌ API key required to use the AI feature. Get your free key at: https://console.anthropic.com/', 'assistant');
+                        return;
+                    }
+                    localStorage.setItem('anthropic_api_key', key);
+                    addMessage('✅ API key saved! Ask your question again.', 'assistant');
+                    return;
+                }
+                
+                // Call Claude API
+                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": apiKey,
+                        "anthropic-version": "2023-06-01"
+                    },
+                    body: JSON.stringify({
+                        model: "claude-sonnet-4-20250514",
+                        max_tokens: 1000,
+                        messages: [
+                            { 
+                                role: "user", 
+                                content: `You are an educational AI assistant designed for students. Explain the following topic clearly and concisely. Focus on breaking down complex concepts into simple terms. If relevant, mention what kinds of images or diagrams would help visualize this concept.
+
+User question: ${userMessage}
+
+Provide a clear, engaging explanation suitable for students.`
+                            }
+                        ],
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('anthropic_api_key');
+                        addMessage('❌ Invalid API key. Please click the "🔑 API Key" button and enter a valid key.\n\nGet one FREE at: https://console.anthropic.com/', 'assistant');
+                        return;
+                    }
+                    throw new Error(data.error?.message || 'API request failed');
+                }
+                
+                let aiResponse = data.content
+                    .filter(item => item.type === "text")
+                    .map(item => item.text)
+                    .join("\n");
+
+                // Create message with AI response
+                const messageDiv = addMessage(aiResponse, 'assistant');
+                
+                // Add visual content if enabled
+                if (visualsEnabled) {
+                    await addVisualContent(messageDiv, userMessage);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('⚠️ Error: ' + error.message + '\n\nMake sure you have a valid API key. Click "🔑 API Key" button to set it up.\n\nGet FREE API key at: https://console.anthropic.com/', 'assistant');
+            }
+        }
+
+        async function addVisualContent(messageDiv, topic) {
+            const contentDiv = messageDiv.querySelector('.message-content');
+            
+            // Create visual content container
+            const visualDiv = document.createElement('div');
+            visualDiv.className = 'visual-content';
+            
+            // Generate sample images (in production, use real image search API)
+            const images = await searchImages(topic);
+            
+            images.forEach((img, index) => {
+                const visualItem = document.createElement('div');
+                visualItem.className = 'visual-item';
+                visualItem.style.animationDelay = `${index * 0.2}s`;
+                visualItem.innerHTML = `
+                    <img src="${img.url}" alt="${img.title}" />
+                    <div class="visual-caption">${img.title}</div>
+                `;
+                visualItem.onclick = () => window.open(img.url, '_blank');
+                visualDiv.appendChild(visualItem);
+            });
+            
+            contentDiv.appendChild(visualDiv);
+        }
+
+        async function searchImages(query) {
+            // This is a placeholder. In production, integrate with:
+            // - Unsplash API
+            // - Pexels API
+            // - Wikipedia API for educational diagrams
+            // - Custom diagram generation
+            
+            const placeholders = [
+                {
+                    url: `https://source.unsplash.com/400x300/?${encodeURIComponent(query)},education`,
+                    title: `${query} - Visual Overview`
+                },
+                {
+                    url: `https://source.unsplash.com/400x300/?${encodeURIComponent(query)},diagram`,
+                    title: `${query} - Diagram`
+                },
+                {
+                    url: `https://source.unsplash.com/400x300/?${encodeURIComponent(query)},science`,
+                    title: `${query} - Detailed View`
+                }
+            ];
+            
+            return placeholders.slice(0, 2); // Return 2 images
+        }
+
+        // Add some example quick questions
+        function addQuickQuestion(question) {
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+    </script>
+</body>
+</html>
